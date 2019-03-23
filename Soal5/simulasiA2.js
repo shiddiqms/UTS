@@ -177,6 +177,7 @@ function createAndArrangeElements() {
 	ta.style.width = "300px";
 	ta.style.height = "146px";
 	ta.style.overflowY = "scroll";
+	ta.style.overflowX = "scroll";
 	
 	// Create a canvas
 	can = document.createElement("canvas");
@@ -187,7 +188,6 @@ function createAndArrangeElements() {
 	can.style.border = "1px solid #ccc";
 	
 	// Arrange elements
-	
 	document.body.append(btn);
 	document.body.append(ta);
 	document.body.append(can);
