@@ -10,9 +10,9 @@ var btn, ta, can;
 var proc, Tproc;
 var tbeg, tend, dt, t;
 var Tdata , Ndata , idata ;
-var m1 , D1 , x1 , y1 , v1 , cL1 , cF1 ;
-var m2 , D2 , x2 , y2 , v2 , cL2 , cF2 ;
-var kN , gammaN ;
+var m1 , D1 , x1 , y1 , vx1, vy1, cL1 , cF1 ;
+var m2 , D2 , x2 , y2 , vx2, vy2, cL2 , cF2 ;
+var kN , gammaN, eps;
 var xmin , ymin , xmax , ymax ;
 
 // Execute main function
@@ -42,12 +42,13 @@ function initParams(){
 	// Set collision parameters
 	kN = 10000;
 	gammaN = 8;
+	eps = 1;
 	
 	// Set physical system parameters of mass m1 and m2
 	m1 = 0.01; 
-	D1 = 0.01; 
-	m2 = 0.01; 
-	D2 = 0.01;
+	D1 = 0.02; 
+	m2 = 0.02; 
+	D2 = 0.02;
 	
 	// Set color of m1 and m2
 	cL1 = "#f00";
@@ -57,20 +58,22 @@ function initParams(){
 	
 	// Set initial conditions
 	x1 = -0.01; // m
-	y1 = 0; // m
-	v1 = 0.1; // m/s
+	y1 = 0.01; // m
+	vx1 = 0; // m/s
+	vy1 = 0; // m/s
 	x2 = 0.01; // m
-	v2 = -0.1; // m/s
+	vx2 = 0; // m/s
+	vy2 = 0; // m/s
 	y2 = 0; // m
 
 	// Set drawing area
-	xmin = -0.02; // m
-	ymin = -0.05; // m
-	xmax = 0.02; // m
-	ymax = 0.05; // m
+	xmin = -0.1; // m
+	ymin = -0.1; // m
+	xmax = 0.1; // m
+	ymax = 0.1; // m
 
 	// Display header information
-	ta.value = "# t\tx1\tx2\tv1\tv2\n";
+	ta.value = "# t\tx1\tx2\ty1\ty2\tvx1\tvx2\tvy1\tvy2\n";
 }
 
 // Perform simulation
@@ -81,7 +84,9 @@ function simulate() {
 		// Display results on textarea
 		ta.value += t.toFixed(3) + "\t"	
 		 + x1.toFixed(4) + "\t" + x2.toFixed(4) + "\t"
-		 + v1.toFixed(3) + "\t" + v2.toFixed(3) + "\n";
+		 + y1.toFixed(4) + "\t" + y2.toFixed(4) + "\t"
+		 + vx1.toFixed(3) + "\t" + vx2.toFixed(3) + "\t"
+		 + vx1.toFixed(3) + "\t" + vx2.toFixed(3) + "\n";
 		ta.scrollTop = ta.scrollHeight;
 	
 		// Display mass position of canvas
@@ -93,24 +98,41 @@ function simulate() {
 	}
 
 	// Calculate overlap
-	var l12 = Math.abs(x1-x2);
-	var xi = Math.max(0,0.5*(D1 + D2)- l12 );
-	var xidot = -Math.abs(v1 - v2)*Math.sign(xi);
+	//var l12 = Math.abs(x1-x2);
+	//var xi = Math.max(0,0.5*(D1 + D2)- l12 );
+	//var xidot = -Math.abs(vx1 - vx2)*Math.sign(xi);
+	
+	var l12x = -(x1-x2);
+	var l12y = -(y1-y2);
+	var r = Math.sqrt(l12x*l12x+ l12y*l12y);
+	var sigma = (D1+D2)/2;
 
 	// Calculate normal force
-	var F1 = (kN*xi + gammaN*xidot )*(-1);
-	var F2 = -F1;
+	//var Fx1 = (kN*xi + gammaN*xidot )*(-1);
+	//var Fx2 = -Fx1;
 
+	// Calculate normal force
+	var Fx1 = ((24*eps/r)*((2*(sigma/r)^12)-(sigma/r)^6))*l12x;
+	var Fx2 = -Fx1;
+	var Fy1 = ((24*eps/r)*((2*(sigma/r)^12)-(sigma/r)^6))*l12y;
+	var Fy2 = -Fy1;
+	
 	// Use Newton 2nd law of motion
-	var a1 = F1/m1;
-	var a2 = F2/m2;
-
+	var ax1 = Fx1/m1;
+	var ax2 = Fx2/m2;
+	var ay1 = Fy1/m1;
+	var ay2 = Fy2/m2;
+	
 	// Implement Euler method
-	v1 = v1 + a1*dt;
-	x1 = x1 + v1*dt;
+	vx1 = vx1 + ax1*dt;
+	x1 = x1 + vx1*dt;
+	vy1 = vy1 + ay1*dt;
+	y1 = y1 + vy1*dt;
 
-	v2 = v2 + a2*dt;
-	x2 = x2 + v2*dt;
+	vx2 = vx2 + ax2*dt;
+	x2 = x2 + vx2*dt;
+	vy2 = vy2 + ay2*dt;
+	y2 = y2 + vy2*dt;
 
 	// Terminate simulation if condition meets
 	if(t>=tend){
@@ -164,6 +186,9 @@ function drawMassOnCanvas(x, y, R, cLine , cFill , can) {
 
 // Create and arrange elements
 function createAndArrangeElements() {
+	// Create text with style h1
+	h1 = document.createElement("h1");
+
 	
 	// Create start button
 	btn = document.createElement("button");
@@ -174,20 +199,20 @@ function createAndArrangeElements() {
 		
 	// Create output textarea
 	ta = document.createElement("textarea");
-	ta.style.width = "350px";
-	ta.style.height = "150px";
+	ta.style.width = "550px";
+	ta.style.height = "200px";
 	ta.style.overflowY = "scroll";
-	
 	
 	// Create a canvas
 	can = document.createElement("canvas");
-	can.width = "350";
-	can.height = "150";
+	can.width = "400";
+	can.height = "400";
 	can.style.width = can.width + "px";
 	can.style.height = can.height + "px";
 	can.style.border = "1px solid #ccc";
 	
 	// Arrange elements
+	document.body.append(h1);
 	document.body.append(btn);
 	document.body.append(ta);
 	document.body.append(can);
