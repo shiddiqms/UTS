@@ -174,14 +174,14 @@ function createAndArrangeElements() {
 		
 	// Create output textarea
 	ta = document.createElement("textarea");
-	ta.style.width = "300px";
-	ta.style.height = "146px";
+	ta.style.width = "350px";
+	ta.style.height = "150px";
 	ta.style.overflowY = "scroll";
-	ta.style.overflowX = "scroll";
+	
 	
 	// Create a canvas
 	can = document.createElement("canvas");
-	can.width = "300";
+	can.width = "350";
 	can.height = "150";
 	can.style.width = can.width + "px";
 	can.style.height = can.height + "px";
