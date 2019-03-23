@@ -6,7 +6,7 @@
 */
 
 // Define global variables
-var h1, btn, ta, can;
+var btn, ta, can;
 var proc, Tproc;
 var tbeg, tend, dt, t;
 var m, kx, ky, Lx, Ly, x0, y0, v0x, v0y;
@@ -172,9 +172,6 @@ function drawMassOnCanvas(x, y, can) {
 
 // Create and arrange elements
 function createAndArrangeElements() {
-	// Create text with style h1
-	h1 = document.createElement("h1");
-	h1.innerHTML = "Two perpendicular springs and a mass";
 	
 	// Create start button
 	btn = document.createElement("button");
