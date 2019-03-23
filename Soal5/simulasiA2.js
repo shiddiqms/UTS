@@ -5,19 +5,21 @@
 	10216042
 */
 
-// Define global variables
+
 var btn, ta, can;
 var proc, Tproc;
 var tbeg, tend, dt, t;
-var m, kx, ky, Lx, Ly, x0, y0, v0x, v0y;
-var xo, yo, x, y, vx, vy;
-var xmin, ymin, xmax, ymax;
+var Tdata , Ndata , idata ;
+var m1 , D1 , x1 , y1 , v1 , cL1 , cF1 ;
+var m2 , D2 , x2 , y2 , v2 , cL2 , cF2 ;
+var kN , gammaN ;
+var xmin , ymin , xmax , ymax ;
 
 // Execute main function
-main();
+main ();
 
 // Define main function
-function main() {
+function main(){
 	// Create and arrange elements
 	createAndArrangeElements();
 	
@@ -26,146 +28,136 @@ function main() {
 }
 
 // Initialize parameters
-function initParams() {
+function initParams(){
 	// Set iteration parameters
-	Tproc = 100;
+	Tproc = 1;
 	tbeg = 0;
-	tend = 1;
-	dt = 0.01;
+	tend = 0.1;
+	dt = 0.0001;
 	t = tbeg;
+	Tdata = 0.001;
+	Ndata = Math.round(Tdata/dt);
+	idata = Ndata ;
 	
-	// Set physical system parameters
-	m = 0.1;
-	kx = 100;
-	ky = 100;
-	Lx = 0.4;
-	Ly = 0.4;
-	xo = 0;
-	yo = 0;
-	x0 = xo;
-	y0 = yo;
-	v0x = 5;
-	v0y = 0;
+	// Set collision parameters
+	kN = 10000;
+	gammaN = 8;
+	
+	// Set physical system parameters of mass m1 and m2
+	m1 = 0.01; 
+	D1 = 0.01; 
+	m2 = 0.01; 
+	D2 = 0.01;
+	
+	// Set color of m1 and m2
+	cL1 = "#f00";
+	cF1 = "#fcc";
+	cL2 = "#00f";
+	cF2 = "#ccf";
 	
 	// Set initial conditions
-	x = x0;
-	y = y0
-	vx = v0x;
-	vy = v0y;
-	
+	x1 = -0.01; // m
+	y1 = 0; // m
+	v1 = 0.1; // m/s
+	x2 = 0.01; // m
+	v2 = -0.1; // m/s
+	y2 = 0; // m
+
 	// Set drawing area
-	xmin = -0.5;
-	ymin = -0.5;
-	xmax = 0.5;
-	ymax = 0.5;
-	
+	xmin = -0.02; // m
+	ymin = -0.05; // m
+	xmax = 0.02; // m
+	ymax = 0.05; // m
+
 	// Display header information
-	ta.value = "# t\tx\ty\tvx\tvy\n";
+	ta.value = "# t\tx1\tx2\tv1\tv2\n";
 }
 
 // Perform simulation
 function simulate() {
-	// Display results on textarea
-	ta.value += t.toFixed(3) + "\t" 
-		+ x.toFixed(3) + "\t" + y.toFixed(3) + "\t"
-		+ vx.toFixed(3) + "\t" + vy.toFixed(3) + "\n";
-	ta.scrollTop = ta.scrollHeight;
+
+	if(idata == Ndata){
 	
-	// Display mass position of canvas
-	clearCanvas(can);
-	drawMassOnCanvas(x, y, can);
+		// Display results on textarea
+		ta.value += t.toFixed(3) + "\t"	
+		 + x1.toFixed(4) + "\t" + x2.toFixed(4) + "\t"
+		 + v1.toFixed(3) + "\t" + v2.toFixed(3) + "\n";
+		ta.scrollTop = ta.scrollHeight;
 	
+		// Display mass position of canvas
+		clearCanvas(can);	
+		drawMassOnCanvas(x1, y1, 0.5*D1, cL1, cF1, can);
+		drawMassOnCanvas(x2, y2, 0.5*D2, cL2, cF2, can);
+
+		idata = 0;
+	}
+
+	// Calculate overlap
+	var l12 = Math.abs(x1-x2);
+	var xi = Math.max(0,0.5*(D1 + D2)- l12 );
+	var xidot = -Math.abs(v1 - v2)*Math.sign(xi);
+
+	// Calculate normal force
+	var F1 = (kN*xi + gammaN*xidot )*(-1);
+	var F2 = -F1;
+
+	// Use Newton 2nd law of motion
+	var a1 = F1/m1;
+	var a2 = F2/m2;
+
 	// Implement Euler method
-	var wx = Math.sqrt(kx/m);
-	var sxx = x - xo + Lx;
-	var sxy = y - yo;
-	var ax = -(wx*wx) * (Math.sqrt(sxx*sxx + sxy*sxy) - Lx);
-	vx = vx + ax*dt;
-	x = x + vx*dt;
-	
-	var wy = Math.sqrt(ky/m);
-	var syx = x - xo;
-	var syy = y - yo + Ly;
-	var ay = -(wy*wy) * (Math.sqrt(syx*syx + syy*syy) - Ly);
-	vy = vy + ay*dt;
-	y = y + vy*dt;
-	
-	// Terminate simulation if condition meets		
-	if(t >= tend - dt) {
+	v1 = v1 + a1*dt;
+	x1 = x1 + v1*dt;
+
+	v2 = v2 + a2*dt;
+	x2 = x2 + v2*dt;
+
+	// Terminate simulation if condition meets
+	if(t>=tend){
 		clearInterval(proc);
 		btn.innerHTML = "Start";
-		btn.disabled = true;
+		btn.disabled = true ;
 	} else {
 		t +=dt;
+		idata++;
 	}
 }
 
 // Clear canvas
 function clearCanvas(can) {
 	var cx = can.getContext("2d");
-	cx.clearRect(0, 0, can.width, can.height);
+	cx.clearRect (0,0,can.width,can.height);
 }
 
 // Display mass position of canvas
-function drawMassOnCanvas(x, y, can) {
+function drawMassOnCanvas(x, y, R, cLine , cFill , can) {
 	var cx = can.getContext("2d");
-	
+
 	// Get canvas coordinate
 	var XMIN = 0;
-	var YMIN = can.height;
-	var XMAX = can.width;
+	var YMIN = can.height ;
+	var XMAX = can.width ;
 	var YMAX = 0;
-	
-	// Draw spring kx
-	cx.beginPath();
-	cx.strokeStyle = "#f00";
-	cx.moveTo(tx(x), ty(y));
-	cx.lineTo(tx(xo - Lx), ty(yo));
-	cx.stroke();
-	cx.beginPath();
-	cx.strokeStyle = "#f00";
-	cx.arc(tx(xo - Lx), ty(yo), 2, 0, 2*Math.PI);
-	cx.stroke();
-	cx.fillStyle = "#f00";
-	cx.fill();
-	
-	// Draw spring ky
-	cx.beginPath();
-	cx.strokeStyle = "#00f";
-	cx.moveTo(tx(x), ty(y));
-	cx.lineTo(tx(xo), ty(yo - Ly));
-	cx.stroke();
-	cx.beginPath();
-	cx.strokeStyle = "#00f";
-	cx.arc(tx(xo), ty(yo - Ly), 2, 0, 2*Math.PI);
-	cx.stroke();
-	cx.fillStyle = "#00f";
-	cx.fill();
-	
+
 	// Draw mass
-	var R = 10;
+	var RR = tx(2*R) -tx(R);
 	cx.beginPath();
-	cx.strokeStyle = "#000";
-	cx.arc(tx(x), ty(y), R, 0, 2*Math.PI);
+	cx.strokeStyle = cLine;
+	cx.lineWidth = 4;
+	cx.arc(tx(x), ty(y), RR, 0, 2*Math.PI);
 	cx.stroke();
-	cx.fillStyle = "#ccc";
-	cx.fill();
-	cx.beginPath();
-	cx.strokeStyle = "#000";
-	cx.arc(tx(x), ty(y), 2, 0, 2*Math.PI);
-	cx.stroke();
-	cx.fillStyle = "#000";
+	cx.fillStyle = cFill;
 	cx.fill();
 	
-	// Transform x from real coordinate to canvas coordinate
-	function tx(x) {
-		var xx = (x - xmin) / (xmax - xmin) * (XMAX - XMIN) + XMIN;
+	//Transform x from real coordinate to canvas coordinate
+	function tx(x){
+		var xx = (x - xmin)/(xmax - xmin)*(XMAX - XMIN)+ XMIN;
 		return xx;
 	}
 	
 	// Transform y from real coordinate to canvas coordinate
 	function ty(y) {
-		var yy = (y - ymin) / (ymax - ymin) * (YMAX - YMIN) + YMIN;
+		var yy = (y - ymin)/(ymax - ymin)*(YMAX - YMIN)+ YMIN;
 		return yy;
 	}
 }
@@ -183,18 +175,19 @@ function createAndArrangeElements() {
 	// Create output textarea
 	ta = document.createElement("textarea");
 	ta.style.width = "300px";
-	ta.style.height = "296px";
+	ta.style.height = "146px";
 	ta.style.overflowY = "scroll";
 	
 	// Create a canvas
 	can = document.createElement("canvas");
 	can.width = "300";
-	can.height = "300";
+	can.height = "150";
 	can.style.width = can.width + "px";
 	can.style.height = can.height + "px";
 	can.style.border = "1px solid #ccc";
 	
 	// Arrange elements
+	
 	document.body.append(btn);
 	document.body.append(ta);
 	document.body.append(can);
@@ -214,4 +207,3 @@ function btnClick() {
 	}
 }
 	
-
